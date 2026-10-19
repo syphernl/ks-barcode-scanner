@@ -77,6 +77,10 @@ python3 tools/build.py
 
 The build writes the ZIP, its checksum and the manifest to `dist/`. `sdk/` and `tools/` come from the [plugin template](https://github.com/jxlarrea/kiosk-satellite-plugins).
 
+## Releasing
+
+Commits on `main` follow [Conventional Commits](https://www.conventionalcommits.org/): `fix:` for a fix, `feat:` for a new feature. Release Please keeps a release PR open with the next version and the changelog. Merging that PR tags the release, and the same workflow builds the package and attaches it. Kiosk Satellite only accepts release files uploaded by GitHub Actions.
+
 ## License
 
 Apache-2.0
