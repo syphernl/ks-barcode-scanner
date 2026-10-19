@@ -1,0 +1,10 @@
+version: 2
+updates:
+  # Keeps the workflow actions current. The ci prefix keeps these out of the
+  # release notes and does not trigger a plugin release.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci
