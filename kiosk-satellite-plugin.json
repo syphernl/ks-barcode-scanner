@@ -1,0 +1,89 @@
+{
+  "schemaVersion": 1,
+  "id": "barcode-scanner",
+  "name": "Barcode Scanner",
+  "version": "0.1.0",
+  "apiVersion": 1,
+  "minAndroidSdk": 24,
+  "entryClass": "nl.syphernl.kiosk.barcode.BarcodeScannerPlugin",
+  "description": "Scan a barcode with the kiosk camera and send it to Home Assistant as a kiosk_barcode_scanned event. Start a scan from a gesture, the drawer or a Home Assistant button.",
+  "author": "syphernl",
+  "license": "Apache-2.0",
+  "capabilities": [
+    "barcode",
+    "ha"
+  ],
+  "settings": [
+    {
+      "key": "formats",
+      "type": "select",
+      "title": "Codes",
+      "default": "Product barcodes",
+      "options": [
+        "Product barcodes",
+        "All codes"
+      ],
+      "group": "Scanner",
+      "description": "Product barcodes reads EAN-13, EAN-8, UPC-A and UPC-E. All codes also reads QR codes and the other formats, a bit slower."
+    },
+    {
+      "key": "facing",
+      "type": "select",
+      "title": "Camera",
+      "default": "Back",
+      "options": [
+        "Back",
+        "Front",
+        "Camera settings"
+      ],
+      "group": "Scanner",
+      "description": "The lens the scanner opens with. The flip button in the scanner switches it."
+    },
+    {
+      "key": "timeoutSeconds",
+      "type": "number",
+      "title": "Timeout",
+      "default": 30,
+      "min": 5,
+      "max": 120,
+      "step": 5,
+      "unit": "s",
+      "group": "Scanner",
+      "description": "The scanner closes when it reads nothing in this time."
+    },
+    {
+      "key": "title",
+      "type": "string",
+      "title": "Scanner title",
+      "default": "Scan a product",
+      "group": "Scanner"
+    },
+    {
+      "key": "message",
+      "type": "string",
+      "title": "Scanner message",
+      "default": "Hold the barcode inside the frame.",
+      "group": "Scanner"
+    }
+  ],
+  "commands": [
+    {
+      "id": "scan",
+      "title": "Scan barcode"
+    },
+    {
+      "id": "cancel",
+      "title": "Close scanner"
+    }
+  ],
+  "groups": [
+    {
+      "title": "Scanner",
+      "readingsTitle": "Last scan",
+      "readings": [
+        "text_sensor.last_code",
+        "text_sensor.last_code_format"
+      ]
+    }
+  ]
+}
