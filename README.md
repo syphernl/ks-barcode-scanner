@@ -6,17 +6,25 @@ The **Scan barcode** command opens the Kiosk Satellite scanner over the dashboar
 
 ## Requirements
 
-- Kiosk Satellite with the plugin `barcode` capability (the release after 2026.10.29). Older versions refuse to install the plugin.
+- Kiosk Satellite 2026.10.30 or newer. Older versions refuse to install the plugin.
 - **Settings > Camera > Enable camera** switched on.
 - The Home Assistant connection set up in Kiosk Satellite.
 
 ## Install
 
-Build the ZIP (see below), then open **Plugin Manager > Developer Tools > Install from ZIP** on the kiosk or in Remote Admin and pick `dist/barcode-scanner-<version>.zip`. Enable the plugin from its entry row.
+In Kiosk Satellite, open **Settings > Plugin Manager**, choose **Add plugin**, paste `https://github.com/syphernl/ks-barcode-scanner` and choose **Preview**. Read the review, choose **Trust and install** and enable the plugin from its entry row.
+
+## Where data goes
+
+Each scanned code goes to your own Home Assistant as an event, through the connection Kiosk Satellite already has. The plugin sends nothing anywhere else. Scanning happens on the device with ML Kit, inside Kiosk Satellite.
+
+## Tested on
+
+A Lenovo Tab M10 (TB-X606F) with Kiosk Satellite 2026.10.30. Both cameras read product barcodes. The back camera focuses and reads fastest. The front camera has fixed focus, so it reads too, but slower and only once the package is at the right distance.
 
 ## Start a scan
 
-Open the plugin's page and pick where **Scan barcode** should live. It can go in the kiosk drawer, on a gesture under **Gestures > Run a plugin action**, or in Home Assistant as an ESPHome button. With the button exposed, a dashboard button can start a scan:
+Open the plugin's page and pick where **Scan barcode** should live. It can go in the kiosk drawer, on a gesture under **Gestures > Run a plugin action**, or in Home Assistant as an ESPHome button named `button.<kiosk>_barcode_scanner_scan_barcode`. With the button exposed, a dashboard button can start a scan:
 
 ```yaml
 type: button
@@ -26,7 +34,7 @@ tap_action:
   action: perform-action
   perform_action: button.press
   target:
-    entity_id: button.<kiosk>_scan_barcode
+    entity_id: button.<kiosk>_barcode_scanner_scan_barcode
 ```
 
 **Close scanner** closes an open scan.
@@ -55,8 +63,6 @@ actions:
 | Camera | Back | The lens the scanner opens with. Camera settings uses the lens picked in Kiosk Satellite. The flip button in the scanner switches it |
 | Timeout | 30 s | The scanner closes after 5 to 120 seconds without a read |
 | Scanner title, Scanner message | Scan a product, Hold the barcode inside the frame. | The text in the scanner. Empty falls back to the Kiosk Satellite text |
-
-A front camera with fixed focus often can't read a package held close. Use the back camera on such a tablet.
 
 The plugin page shows why a scan failed: `disabled` means the camera is off in Kiosk Satellite, `permission` means Android never gave it camera access and `busy` means another plugin has a scan open. A scan that times out or that you close is not an error.
 
