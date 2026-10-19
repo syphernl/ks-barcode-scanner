@@ -8,7 +8,7 @@ The **Scan barcode** command opens the Kiosk Satellite scanner over the dashboar
 
 - Kiosk Satellite 2026.10.30 or newer. Older versions refuse to install the plugin.
 - **Settings > Camera > Enable camera** switched on.
-- The Home Assistant connection set up in Kiosk Satellite.
+- The Home Assistant connection set up in Kiosk Satellite, with an admin user. Home Assistant lets only admins fire events over its websocket API. With a non-admin user the plugin page shows "Could not send the code to Home Assistant" and no event arrives.
 
 ## Install
 

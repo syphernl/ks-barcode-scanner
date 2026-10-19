@@ -42,14 +42,17 @@ public final class BarcodeScannerPlugin implements KioskPlugin {
         Object facing = settings.get("facing");
         options.put("facing", "Front".equals(facing) ? "front" : "Camera settings".equals(facing) ? "default" : "back");
         options.put("timeoutSeconds", ((Number) settings.get("timeoutSeconds")).intValue());
-        putText(options, "title", settings.get("title"));
-        putText(options, "message", settings.get("message"));
+        // The scanner takes up to 80 and 200 characters; a string setting holds 512.
+        putText(options, "title", settings.get("title"), 80);
+        putText(options, "message", settings.get("message"), 200);
         return options;
     }
 
     /** An empty text leaves the KS default in place. */
-    private static void putText(Map<String, Object> options, String key, Object value) {
-        if (value instanceof String && !((String) value).trim().isEmpty()) options.put(key, ((String) value).trim());
+    private static void putText(Map<String, Object> options, String key, Object value, int max) {
+        if (!(value instanceof String)) return;
+        String text = ((String) value).trim();
+        if (!text.isEmpty()) options.put(key, text.length() > max ? text.substring(0, max) : text);
     }
 
     @Override
@@ -65,9 +68,10 @@ public final class BarcodeScannerPlugin implements KioskPlugin {
         scanning = true;
         try {
             host.scanBarcode(new LinkedHashMap<>(options), this::finished);
-        } catch (UnsupportedOperationException | LinkageError olderHost) {
+        } catch (RuntimeException rejected) {
+            // A rejected scan must not leave scanning set, or every later press is ignored.
             scanning = false;
-            host.status("Barcode scanning needs a newer Kiosk Satellite.", true);
+            host.status("Could not open the scanner: " + rejected.getMessage(), true);
         }
     }
 
@@ -98,10 +102,14 @@ public final class BarcodeScannerPlugin implements KioskPlugin {
         message.put("event_type", EVENT);
         message.put("event_data", eventData);
         PluginHost current = host;
-        current.haCall(message, (sent, reply, failure) -> {
-            if (sent) current.status("Sent " + format + " " + value + " to Home Assistant.", false);
-            else current.status("Could not send the code to Home Assistant: " + failure, true);
-        });
+        // The code itself stays out of the status: a QR code can carry a password.
+        current.haCall(message, (sent, reply, failure) -> report(current,
+            sent ? "Sent a " + format + " code to Home Assistant." : "Could not send the code to Home Assistant: " + failure, !sent));
+    }
+
+    /** A reply can arrive after stop, when the host it came through is revoked. */
+    private synchronized void report(PluginHost from, String message, boolean error) {
+        if (host == from) host.status(message, error);
     }
 
     @Override
