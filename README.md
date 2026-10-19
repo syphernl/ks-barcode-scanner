@@ -10,9 +10,23 @@ The **Scan barcode** command opens the Kiosk Satellite scanner over the dashboar
 - **Settings > Camera > Enable camera** switched on.
 - The Home Assistant connection set up in Kiosk Satellite, with an admin user. Home Assistant lets only admins fire events over its websocket API. With a non-admin user the plugin page shows "Could not send the code to Home Assistant" and no event arrives.
 
-## Install
+## Installation
 
-In Kiosk Satellite, open **Settings > Plugin Manager**, choose **Add plugin**, paste `https://github.com/syphernl/ks-barcode-scanner` and choose **Preview**. Read the review, choose **Trust and install** and enable the plugin from its entry row.
+### Community Plugins (Recommended)
+
+Barcode Scanner is listed in [Community Plugins](https://kiosksatellite.com/plugins/). Use the button below to open it in your Kiosk Satellite and install it.
+
+[![Install in Kiosk Satellite](https://kiosksatellite.com/img/badges/plugin-add.svg)](https://kiosksatellite.com/redirect/plugin/?repository=syphernl/ks-barcode-scanner)
+
+Or search for `Barcode Scanner` in **Settings > Plugin Manager > Browse plugins** in Kiosk Satellite.
+
+### Manual
+
+1. Open **Settings > Plugin Manager** in Kiosk Satellite and turn on **Enable Plugins**.
+2. Choose **Add plugin**, paste `https://github.com/syphernl/ks-barcode-scanner` and choose **Preview**.
+3. Review the plugin and choose **Trust and install**.
+
+Enable the plugin from its entry row once it is installed.
 
 ## Where data goes
 
