@@ -171,6 +171,16 @@ public final class BarcodeScannerPluginTest {
         assert !host.statusError;
         plugin.configure(defaults());
         plugin.execute("scan", Collections.emptyMap());
+        host.scan.onResult(true, read("4006381333931", "ean_13"), null);
+        assert host.haCalls.size() == sent + 1;
+
+        // A code longer than a Home Assistant state is cut for the sensor, never for the event.
+        String longCode = String.join("", Collections.nCopies(300, "q"));
+        plugin.execute("scan", Collections.emptyMap());
+        host.scan.onResult(true, read(longCode, "qr_code"), null);
+        assert host.values.get("last_code").length() == BarcodeScannerPlugin.MAX_SENSOR_LENGTH;
+        assert longCode.equals(((Map<?, ?>) host.haCalls.get(host.haCalls.size() - 1).get("event_data")).get("value"));
+        plugin.execute("scan", Collections.emptyMap());
 
         // After stop a late result is ignored.
         int calls = host.haCalls.size();

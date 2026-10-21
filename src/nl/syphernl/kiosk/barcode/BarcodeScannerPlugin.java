@@ -18,7 +18,8 @@ import me.jxl.kiosk.plugins.PluginHost;
 public final class BarcodeScannerPlugin implements KioskPlugin {
     static final String EVENT = "kiosk_barcode_scanned";
     static final List<String> PRODUCT_FORMATS = Arrays.asList("ean_13", "ean_8", "upc_a", "upc_e");
-    private static final int MAX_SENSOR_LENGTH = 512;
+    // KS takes 512 characters, but Home Assistant drops a state longer than 255.
+    static final int MAX_SENSOR_LENGTH = 255;
     private static final Map<String, Object> COUNT_METADATA = new LinkedHashMap<>();
     static { COUNT_METADATA.put("accuracyDecimals", 0); }
 

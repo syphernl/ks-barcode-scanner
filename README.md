@@ -75,13 +75,14 @@ With ESPHome enabled in Kiosk Satellite, the plugin also shows up as three senso
 
 | Sensor | State |
 | --- | --- |
-| `sensor.<kiosk>_barcode_scanner_last_code` | The last code read |
+| `sensor.<kiosk>_barcode_scanner_last_code` | The last code read, cut at 255 characters. The event carries the full code |
 | `sensor.<kiosk>_barcode_scanner_last_code_format` | Its format |
 | `sensor.<kiosk>_barcode_scanner_scan_count` | Goes up by one on every read, back to 0 when the plugin starts |
 
 The same code twice leaves `last_code` unchanged, so trigger on the count and read the code from `last_code`:
 
 ```yaml
+mode: queued
 triggers:
   - trigger: state
     entity_id: sensor.<kiosk>_barcode_scanner_scan_count
