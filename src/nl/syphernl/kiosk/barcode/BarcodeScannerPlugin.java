@@ -12,16 +12,21 @@ import me.jxl.kiosk.plugins.PluginHost;
  * The Scan barcode command opens the KS scanner. Every code it reads fires a
  * kiosk_barcode_scanned event in Home Assistant, so scanning the same product
  * twice still triggers an automation twice. The last code also shows under
- * Readings and as a text sensor.
+ * Readings and as a text sensor, and a scan counter goes up on every read for
+ * setups that use the sensors instead of the event.
  */
 public final class BarcodeScannerPlugin implements KioskPlugin {
     static final String EVENT = "kiosk_barcode_scanned";
     static final List<String> PRODUCT_FORMATS = Arrays.asList("ean_13", "ean_8", "upc_a", "upc_e");
     private static final int MAX_SENSOR_LENGTH = 512;
+    private static final Map<String, Object> COUNT_METADATA = new LinkedHashMap<>();
+    static { COUNT_METADATA.put("accuracyDecimals", 0); }
 
     private PluginHost host;
     private Map<String, Object> options;
     private boolean scanning;
+    private boolean sendEvent;
+    private int count;
 
     @Override
     public synchronized void start(PluginHost host, Map<String, Object> settings) {
@@ -29,11 +34,15 @@ public final class BarcodeScannerPlugin implements KioskPlugin {
         configure(settings);
         host.publishTextSensor("last_code", "Last code", null);
         host.publishTextSensor("last_code_format", "Last code format", null);
+        count = 0;
+        host.publishSensor("scan_count", "Scan count", COUNT_METADATA, 0.0);
     }
 
     @Override
     public synchronized void configure(Map<String, Object> settings) {
         options = scanOptions(settings);
+        // Missing on an upgrade from 0.2, when the event was the only output.
+        sendEvent = !Boolean.FALSE.equals(settings.get("sendEvent"));
     }
 
     static Map<String, Object> scanOptions(Map<String, Object> settings) {
@@ -94,6 +103,12 @@ public final class BarcodeScannerPlugin implements KioskPlugin {
         String format = (String) result.get("format");
         host.publishTextSensor("last_code", "Last code", value.length() > MAX_SENSOR_LENGTH ? value.substring(0, MAX_SENSOR_LENGTH) : value);
         host.publishTextSensor("last_code_format", "Last code format", format);
+        // After the code, so a trigger on the count reads the new code.
+        host.publishSensor("scan_count", "Scan count", COUNT_METADATA, (double) ++count);
+        if (!sendEvent) {
+            host.status("Read a " + format + " code.", false);
+            return;
+        }
         Map<String, Object> eventData = new LinkedHashMap<>();
         eventData.put("value", value);
         eventData.put("format", format);
