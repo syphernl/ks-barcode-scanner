@@ -2,13 +2,13 @@
 
 A [Kiosk Satellite](https://github.com/jxlarrea/kiosk-satellite) plugin that scans a barcode with the kiosk's camera and hands the code to Home Assistant.
 
-The **Scan barcode** command opens the Kiosk Satellite scanner over the dashboard. When it reads a code, the plugin fires a `kiosk_barcode_scanned` event in Home Assistant. An event fires on every scan, so scanning the same product twice runs your automation twice, which a "last barcode" sensor would not do. The last code and its format also show under **Readings** on the plugin page and as text sensors.
+The **Scan barcode** command opens the Kiosk Satellite scanner over the dashboard. When it reads a code, the plugin fires a `kiosk_barcode_scanned` event in Home Assistant. An event fires on every scan, so scanning the same product twice runs your automation twice, which a "last barcode" sensor would not do. The last code, its format and a scan count also show under **Readings** on the plugin page and as ESPHome sensors, which work without the event.
 
 ## Requirements
 
 - Kiosk Satellite 2026.10.30 or newer. Older versions refuse to install the plugin.
 - **Settings > Camera > Enable camera** switched on.
-- The Home Assistant connection set up in Kiosk Satellite, with an admin user. Home Assistant lets only admins fire events over its websocket API. With a non-admin user the plugin page shows "Could not send the code to Home Assistant" and no event arrives.
+- For the event: the Home Assistant connection set up in Kiosk Satellite, with an admin user. Home Assistant lets only admins fire events over its websocket API. With a non-admin user the plugin page shows "Could not send the code to Home Assistant" and no event arrives. Turn **Send event** off and use the [sensors](#use-the-sensors) instead.
 
 ## Installation
 
@@ -30,7 +30,7 @@ Enable the plugin from its entry row once it is installed.
 
 ## Where data goes
 
-Each scanned code goes to your own Home Assistant as an event, through the connection Kiosk Satellite already has. The plugin sends nothing anywhere else. Scanning happens on the device with ML Kit, inside Kiosk Satellite.
+Each scanned code goes to your own Home Assistant as an event and as sensor states, through the connections Kiosk Satellite already has. The plugin sends nothing anywhere else. Scanning happens on the device with ML Kit, inside Kiosk Satellite.
 
 ## Tested on
 
@@ -69,6 +69,36 @@ actions:
 
 `format` is one of `ean_13`, `ean_8`, `upc_a`, `upc_e`, or with **All codes** also `qr_code`, `aztec`, `data_matrix`, `pdf417`, `code_128`, `code_39`, `code_93`, `codabar` and `itf`.
 
+## Use the sensors
+
+With ESPHome enabled in Kiosk Satellite, the plugin also shows up as three sensors. They need no admin user, so they suit a kiosk with a restricted Home Assistant account.
+
+| Sensor | State |
+| --- | --- |
+| `sensor.<kiosk>_barcode_scanner_last_code` | The last code read, cut at 255 characters. The event carries the full code |
+| `sensor.<kiosk>_barcode_scanner_last_code_format` | Its format |
+| `sensor.<kiosk>_barcode_scanner_scan_count` | Goes up by one on every read, back to 0 when the plugin starts |
+
+The same code twice leaves `last_code` unchanged, so trigger on the count and read the code from `last_code`:
+
+```yaml
+mode: queued
+triggers:
+  - trigger: state
+    entity_id: sensor.<kiosk>_barcode_scanner_scan_count
+    not_from: [unknown, unavailable]
+conditions:
+  - condition: numeric_state
+    entity_id: sensor.<kiosk>_barcode_scanner_scan_count
+    above: 0
+actions:
+  - action: notify.persistent_notification
+    data:
+      message: "{{ states('sensor.<kiosk>_barcode_scanner_last_code') }}"
+```
+
+The condition skips the reset to 0 when the plugin restarts. With the event off, the plugin page shows "Read a ... code." instead of an error.
+
 ## Settings
 
 | Setting | Default | What it does |
@@ -77,6 +107,7 @@ actions:
 | Camera | Back | The lens the scanner opens with. Camera settings uses the lens picked in Kiosk Satellite. The flip button in the scanner switches it |
 | Timeout | 30 s | The scanner closes after 5 to 120 seconds without a read |
 | Scanner title, Scanner message | Scan a product, Hold the barcode inside the frame. | The text in the scanner. Empty falls back to the Kiosk Satellite text |
+| Send event | On | Fires the `kiosk_barcode_scanned` event. Off sends nothing over the Home Assistant connection, so no admin user is needed. The sensors update either way |
 
 The plugin page shows why a scan failed: `disabled` means the camera is off in Kiosk Satellite, `permission` means Android never gave it camera access and `busy` means another plugin has a scan open. A scan that times out or that you close is not an error.
 

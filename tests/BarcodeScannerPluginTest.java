@@ -7,6 +7,7 @@ import me.jxl.kiosk.plugins.PluginHost;
 public final class BarcodeScannerPluginTest {
     static final class Host implements PluginHost {
         final Map<String, String> values = new HashMap<>();
+        final Map<String, Double> numbers = new HashMap<>();
         final List<Map<String, Object>> haCalls = new ArrayList<>();
         Map<String, Object> options;
         PluginHost.CommandCallback scan;
@@ -25,6 +26,7 @@ public final class BarcodeScannerPluginTest {
         }
         public void cancelBarcodeScan() { cancels++; }
         public void publishTextSensor(String key, String name, String value) { values.put(key, value); }
+        public void publishSensor(String key, String name, Map<String, Object> metadata, Double value) { numbers.put(key, value); }
         public void haCall(Map<String, Object> message, PluginHost.CommandCallback callback) { haCalls.add(message); ha = callback; }
         public void status(String message, boolean error) { status = message; statusError = error; statuses++; }
         public void showWindow(String title, String message, String button) {}
@@ -54,6 +56,7 @@ public final class BarcodeScannerPluginTest {
         BarcodeScannerPlugin plugin = new BarcodeScannerPlugin();
         plugin.start(host, defaults());
         assert host.values.containsKey("last_code") && host.values.get("last_code") == null;
+        assert Double.valueOf(0).equals(host.numbers.get("scan_count"));
 
         plugin.execute("scan", Collections.emptyMap());
         assert BarcodeScannerPlugin.PRODUCT_FORMATS.equals(host.options.get("formats"));
@@ -67,6 +70,7 @@ public final class BarcodeScannerPluginTest {
         host.scan.onResult(true, read("8710400311515", "ean_13"), null);
         assert "8710400311515".equals(host.values.get("last_code"));
         assert "ean_13".equals(host.values.get("last_code_format"));
+        assert Double.valueOf(1).equals(host.numbers.get("scan_count"));
         Map<String, Object> event = host.haCalls.get(0);
         assert "fire_event".equals(event.get("type")) && BarcodeScannerPlugin.EVENT.equals(event.get("event_type"));
         assert "8710400311515".equals(((Map<?, ?>) event.get("event_data")).get("value"));
@@ -78,6 +82,8 @@ public final class BarcodeScannerPluginTest {
         plugin.execute("scan", Collections.emptyMap());
         host.scan.onResult(true, read("8710400311515", "ean_13"), null);
         assert host.haCalls.size() == 2;
+        // The same code twice still changes the count, so a state trigger fires again.
+        assert Double.valueOf(2).equals(host.numbers.get("scan_count"));
         host.ha.onResult(false, null, "not_connected");
         assert host.statusError && host.status.contains("not_connected");
 
@@ -86,6 +92,7 @@ public final class BarcodeScannerPluginTest {
         host.scan.onResult(false, Collections.singletonMap("code", "timeout"), "timeout");
         assert "8710400311515".equals(host.values.get("last_code"));
         assert host.haCalls.size() == 2;
+        assert Double.valueOf(2).equals(host.numbers.get("scan_count"));
         plugin.execute("scan", Collections.emptyMap());
         host.scan.onResult(false, Collections.singletonMap("code", "disabled"), "disabled");
         assert host.statusError && host.status.contains("disabled");
@@ -148,6 +155,31 @@ public final class BarcodeScannerPluginTest {
         lateReply.onResult(true, null, null);
         assert host.statuses == statuses;
         plugin.start(host, defaults());
+        plugin.execute("scan", Collections.emptyMap());
+
+        // With the event off a scan updates the sensors and sends nothing.
+        host.scan.onResult(false, Collections.singletonMap("code", "canceled"), "canceled");
+        Map<String, Object> quiet = defaults();
+        quiet.put("sendEvent", false);
+        plugin.configure(quiet);
+        int sent = host.haCalls.size();
+        plugin.execute("scan", Collections.emptyMap());
+        host.scan.onResult(true, read("4006381333931", "ean_13"), null);
+        assert host.haCalls.size() == sent;
+        assert "4006381333931".equals(host.values.get("last_code"));
+        assert Double.valueOf(1).equals(host.numbers.get("scan_count"));
+        assert !host.statusError;
+        plugin.configure(defaults());
+        plugin.execute("scan", Collections.emptyMap());
+        host.scan.onResult(true, read("4006381333931", "ean_13"), null);
+        assert host.haCalls.size() == sent + 1;
+
+        // A code longer than a Home Assistant state is cut for the sensor, never for the event.
+        String longCode = String.join("", Collections.nCopies(300, "q"));
+        plugin.execute("scan", Collections.emptyMap());
+        host.scan.onResult(true, read(longCode, "qr_code"), null);
+        assert host.values.get("last_code").length() == BarcodeScannerPlugin.MAX_SENSOR_LENGTH;
+        assert longCode.equals(((Map<?, ?>) host.haCalls.get(host.haCalls.size() - 1).get("event_data")).get("value"));
         plugin.execute("scan", Collections.emptyMap());
 
         // After stop a late result is ignored.

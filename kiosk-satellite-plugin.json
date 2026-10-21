@@ -6,7 +6,7 @@
   "apiVersion": 1,
   "minAndroidSdk": 24,
   "entryClass": "nl.syphernl.kiosk.barcode.BarcodeScannerPlugin",
-  "description": "Scan a barcode with the kiosk camera and send it to Home Assistant as a kiosk_barcode_scanned event. Start a scan from a gesture, the drawer or a Home Assistant button.",
+  "description": "Scan a barcode with the kiosk camera and send it to Home Assistant as a kiosk_barcode_scanned event or through ESPHome sensors. Start a scan from a gesture, the drawer or a Home Assistant button.",
   "author": "syphernl",
   "license": "Apache-2.0",
   "capabilities": [
@@ -66,6 +66,14 @@
       "title": "Scanner message",
       "default": "Hold the barcode inside the frame.",
       "group": "Scanner"
+    },
+    {
+      "key": "sendEvent",
+      "type": "boolean",
+      "title": "Send event",
+      "default": true,
+      "group": "Home Assistant",
+      "description": "Fire a kiosk_barcode_scanned event on every scan. Needs an admin user in the Home Assistant connection. Off: use the sensors only."
     }
   ],
   "commands": [
@@ -84,7 +92,8 @@
       "readingsTitle": "Last scan",
       "readings": [
         "text_sensor.last_code",
-        "text_sensor.last_code_format"
+        "text_sensor.last_code_format",
+        "sensor.scan_count"
       ]
     }
   ]
