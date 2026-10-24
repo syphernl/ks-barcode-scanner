@@ -55,7 +55,7 @@ tap_action:
 
 ## Use the result
 
-The event carries the code and its format:
+The event carries the code and its format, plus `scanner` when **Scanner name** is set:
 
 ```yaml
 triggers:
@@ -108,6 +108,7 @@ The condition skips the reset to 0 when the plugin restarts. With the event off,
 | Timeout | 30 s | The scanner closes after 5 to 120 seconds without a read |
 | Scanner title, Scanner message | Scan a product, Hold the barcode inside the frame. | The text in the scanner. Empty falls back to the Kiosk Satellite text |
 | Send event | On | Fires the `kiosk_barcode_scanned` event. Off sends nothing over the Home Assistant connection, so no admin user is needed. The sensors update either way |
+| Scanner name | Empty | Sent as `scanner` in the event. With more than one scanner, an automation can use it to tell them apart, for example with `event_data: {scanner: workshop}` on the trigger. Empty leaves the field out |
 
 The plugin page shows why a scan failed: `disabled` means the camera is off in Kiosk Satellite, `permission` means Android never gave it camera access and `busy` means another plugin has a scan open. A scan that times out or that you close is not an error.
 

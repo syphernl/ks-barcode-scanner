@@ -27,6 +27,7 @@ public final class BarcodeScannerPlugin implements KioskPlugin {
     private Map<String, Object> options;
     private boolean scanning;
     private boolean sendEvent;
+    private String scannerName;
     private int count;
 
     @Override
@@ -44,6 +45,8 @@ public final class BarcodeScannerPlugin implements KioskPlugin {
         options = scanOptions(settings);
         // Missing on an upgrade from 0.2, when the event was the only output.
         sendEvent = !Boolean.FALSE.equals(settings.get("sendEvent"));
+        Object name = settings.get("scannerName");
+        scannerName = name instanceof String ? ((String) name).trim() : "";
     }
 
     static Map<String, Object> scanOptions(Map<String, Object> settings) {
@@ -113,6 +116,8 @@ public final class BarcodeScannerPlugin implements KioskPlugin {
         Map<String, Object> eventData = new LinkedHashMap<>();
         eventData.put("value", value);
         eventData.put("format", format);
+        // Tells scanners apart when several fire the same event.
+        if (!scannerName.isEmpty()) eventData.put("scanner", scannerName);
         Map<String, Object> message = new LinkedHashMap<>();
         message.put("type", "fire_event");
         message.put("event_type", EVENT);

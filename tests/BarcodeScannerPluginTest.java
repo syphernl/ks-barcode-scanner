@@ -75,6 +75,8 @@ public final class BarcodeScannerPluginTest {
         assert "fire_event".equals(event.get("type")) && BarcodeScannerPlugin.EVENT.equals(event.get("event_type"));
         assert "8710400311515".equals(((Map<?, ?>) event.get("event_data")).get("value"));
         assert "ean_13".equals(((Map<?, ?>) event.get("event_data")).get("format"));
+        // Without a scanner name the event keeps its old shape.
+        assert !((Map<?, ?>) event.get("event_data")).containsKey("scanner");
         host.ha.onResult(true, null, null);
         assert !host.statusError;
 
@@ -173,6 +175,15 @@ public final class BarcodeScannerPluginTest {
         plugin.execute("scan", Collections.emptyMap());
         host.scan.onResult(true, read("4006381333931", "ean_13"), null);
         assert host.haCalls.size() == sent + 1;
+
+        // A scanner name goes into the event, trimmed.
+        Map<String, Object> named = defaults();
+        named.put("scannerName", "  workshop ");
+        plugin.configure(named);
+        plugin.execute("scan", Collections.emptyMap());
+        host.scan.onResult(true, read("4006381333931", "ean_13"), null);
+        assert "workshop".equals(((Map<?, ?>) host.haCalls.get(host.haCalls.size() - 1).get("event_data")).get("scanner"));
+        plugin.configure(defaults());
 
         // A code longer than a Home Assistant state is cut for the sensor, never for the event.
         String longCode = String.join("", Collections.nCopies(300, "q"));

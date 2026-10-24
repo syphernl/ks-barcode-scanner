@@ -74,6 +74,14 @@
       "default": true,
       "group": "Home Assistant",
       "description": "Fire a kiosk_barcode_scanned event on every scan. Needs an admin user in the Home Assistant connection. Off: use the sensors only."
+    },
+    {
+      "key": "scannerName",
+      "type": "string",
+      "title": "Scanner name",
+      "default": "",
+      "group": "Home Assistant",
+      "description": "Sent as scanner in the event, so an automation can tell this scanner from others. Empty leaves it out."
     }
   ],
   "commands": [
