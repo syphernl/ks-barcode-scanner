@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/syphernl/ks-barcode-scanner/compare/0.3.0...0.4.0) (2026-10-24)
+
+
+### Features
+
+* scanner name setting, sent as scanner in the event ([d10556d](https://github.com/syphernl/ks-barcode-scanner/commit/d10556de85d2fe0816f98daa18221d8dbea3c619))
+* scanner name setting, sent as scanner in the event ([d721770](https://github.com/syphernl/ks-barcode-scanner/commit/d721770cd74dd8805feb9a9383763ca174270f14))
+
 ## [0.3.0](https://github.com/syphernl/ks-barcode-scanner/compare/0.2.2...0.3.0) (2026-10-21)
 
 
